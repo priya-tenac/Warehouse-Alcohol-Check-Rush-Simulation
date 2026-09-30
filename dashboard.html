@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warehouse Simulation Dashboard</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-2: #1f2937;
+        --card: #0b1220;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --accent: #22c55e;
+        --accent-2: #3b82f6;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --border: rgba(148, 163, 184, 0.2);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(180deg, #020817 0%, #0f172a 100%);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.8rem);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-size: 11px;
+        border: 1px solid transparent;
+        background: rgba(34, 197, 94, 0.12);
+        color: #bbf7d0;
+        border-color: rgba(34, 197, 94, 0.28);
+      }
+
+      .status-pill.warning {
+        background: rgba(245, 158, 11, 0.12);
+        color: #fcd34d;
+        border-color: rgba(245, 158, 11, 0.28);
+      }
+
+      .status-pill.alert {
+        background: rgba(239, 68, 68, 0.12);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.28);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 330px 1fr;
+        gap: 24px;
+      }
+
+      .panel {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      }
+
+      .sidebar {
+        padding: 20px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      label {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      input, select {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.65);
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      button:hover { transform: translateY(-1px); }
+      button:active { transform: translateY(0); }
+
+      .primary {
+        background: linear-gradient(135deg, var(--accent-2), #60a5fa);
+        color: white;
+        flex: 1;
+      }
+
+      .secondary {
+        background: rgba(148, 163, 184, 0.12);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .main {
+        display: grid;
+        gap: 20px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .insight-panel {
+        padding: 20px;
+      }
+
+      .insight-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .metric-bar {
+        margin-top: 10px;
+        background: rgba(148, 163, 184, 0.1);
+        border-radius: 999px;
+        overflow: hidden;
+        height: 10px;
+      }
+
+      .metric-bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .value {
+        margin-top: 8px;
+        font-size: clamp(1.5rem, 3vw, 2.1rem);
+        font-weight: 700;
+      }
+
+      .subvalue {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .list-panel {
+        padding: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .console {
+        background: rgba(2, 6, 23, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        min-height: 260px;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: "Consolas", "Courier New", monospace;
+        color: #cbd5e1;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div>
+          <h1>Warehouse Safety Dashboard</h1>
+        </div>
+        <div id="statusPill" class="status-pill">Live</div>
+      </header>
+
+      <div class="layout">
+        <aside class="panel sidebar">
+          <div class="controls">
+            <h2 style="margin:0 0 8px; font-size:1.05rem;">Simulation settings</h2>
+            <div class="field">
+              <label for="workers">Workers</label>
+              <input id="workers" type="number" value="40" min="0" />
+            </div>
+            <div class="field">
+              <label for="buses">Buses</label>
+              <input id="buses" type="number" value="2" min="1" />
+            </div>
+            <div class="field">
+              <label for="busDelay">Bus 1 delay (min)</label>
+              <input id="busDelay" type="number" value="5" min="0" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="patience">Patience before escalation</label>
+              <input id="patience" type="number" value="12" min="0.1" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="testTime">Test time (min)</label>
+              <input id="testTime" type="number" value="1" min="0" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="invalidRate">Invalid reading rate</label>
+              <input id="invalidRate" type="number" value="0.10" min="0" max="1" step="0.01" />
+            </div>
+            <div class="field">
+              <label for="wrongRate">Wrong result rate</label>
+              <input id="wrongRate" type="number" value="0.03" min="0" max="1" step="0.01" />
+            </div>
+            <div class="field">
+              <label for="alcoholRate">Alcohol rate</label>
+              <input id="alcoholRate" type="number" value="0.10" min="0" max="1" step="0.01" />
+            </div>
+            <div class="field">
+              <label for="backupMachines">Backup machines</label>
+              <input id="backupMachines" type="number" value="1" min="0" />
+            </div>
+            <div class="field">
+              <label for="speed">Real seconds per minute</label>
+              <input id="speed" type="number" value="0.1" min="0.01" step="0.01" />
+            </div>
+            <div class="actions">
+              <button class="primary" id="runBtn">Run simulation</button>
+              <button class="secondary" id="resetBtn" type="button">Reset</button>
+            </div>
+          </div>
+        </aside>
+
+        <main class="main">
+          <section class="stats">
+            <div class="card">
+              <div class="label">Allowed in</div>
+              <div class="value" id="enteredValue">0</div>
+              <div class="subvalue">employees cleared to enter</div>
+            </div>
+            <div class="card">
+              <div class="label">Sent home</div>
+              <div class="value" id="sentHomeValue">0</div>
+              <div class="subvalue">failed alcohol checks</div>
+            </div>
+            <div class="card">
+              <div class="label">Average wait</div>
+              <div class="value" id="avgWaitValue">0.0m</div>
+              <div class="subvalue">time in queue</div>
+            </div>
+            <div class="card">
+              <div class="label">Longest wait</div>
+              <div class="value" id="longestWaitValue">0.0m</div>
+              <div class="subvalue">peak queue delay</div>
+            </div>
+            <div class="card">
+              <div class="label">Security alerts</div>
+              <div class="value" id="incidentsValue">0</div>
+              <div class="subvalue">tablet mismatch events</div>
+            </div>
+            <div class="card">
+              <div class="label">Machines online</div>
+              <div class="value" id="machinesValue">0</div>
+              <div class="subvalue">active testing stations</div>
+            </div>
+          </section>
+
+          <section class="panel insight-panel">
+            <h2 style="margin:0;">Operations snapshot</h2>
+            <div class="insight-grid">
+              <div>
+                <div class="label">Clearance rate</div>
+                <div class="value" id="clearanceRateValue">0%</div>
+                <div class="metric-bar"><span id="clearanceRateBar" style="width:0%"></span></div>
+              </div>
+              <div>
+                <div class="label">Queue pressure</div>
+                <div class="value" id="queuePressureValue">0%</div>
+                <div class="metric-bar"><span id="queuePressureBar" style="width:0%"></span></div>
+              </div>
+              <div>
+                <div class="label">Security risk</div>
+                <div class="value" id="riskValue">0%</div>
+                <div class="metric-bar"><span id="riskBar" style="width:0%"></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel list-panel">
+            <h2>Incident log</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Employee</th>
+                  <th>Tablet state</th>
+                </tr>
+              </thead>
+              <tbody id="incidentsTable">
+                <tr><td colspan="3">No incidents recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="console">
+            <pre id="consoleOutput">Click “Run simulation” to generate a report.</pre>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const defaults = {
+        workers: 40,
+        buses: 2,
+        busDelay: 5,
+        patience: 12,
+        testTime: 1,
+        invalidRate: 0.10,
+        wrongRate: 0.03,
+        alcoholRate: 0.10,
+        backupMachines: 1,
+        speed: 0.1,
+      };
+
+      function readInputs() {
+        return {
+          workers: Number(document.getElementById('workers').value),
+          buses: Number(document.getElementById('buses').value),
+          bus_delay: Number(document.getElementById('busDelay').value),
+          patience: Number(document.getElementById('patience').value),
+          test_time: Number(document.getElementById('testTime').value),
+          invalid_rate: Number(document.getElementById('invalidRate').value),
+          wrong_rate: Number(document.getElementById('wrongRate').value),
+          alcohol_rate: Number(document.getElementById('alcoholRate').value),
+          backup_machines: Number(document.getElementById('backupMachines').value),
+          speed: Number(document.getElementById('speed').value),
+        };
+      }
+
+      function resetForm() {
+        Object.entries(defaults).forEach(([key, value]) => {
+          const elem = document.getElementById(formatId(key));
+          if (elem) elem.value = value;
+        });
+      }
+
+      function formatId(key) {
+        const map = {
+          busDelay: 'busDelay',
+          testTime: 'testTime',
+          invalidRate: 'invalidRate',
+          wrongRate: 'wrongRate',
+          alcoholRate: 'alcoholRate',
+          backupMachines: 'backupMachines',
+        };
+        return map[key] || key.replace(/([A-Z])/g, '-$1').toLowerCase();
+      }
+
+      function getStatusClass(summary) {
+        if (summary.security_incidents >= 10 || summary.longest_wait > 25) {
+          return 'alert';
+        }
+        if (summary.security_incidents >= 3 || summary.longest_wait > 12) {
+          return 'warning';
+        }
+        return '';
+      }
+
+      function updateStatusBadge(summary) {
+        const pill = document.getElementById('statusPill');
+        if (!pill) return;
+
+        const className = getStatusClass(summary);
+        pill.className = 'status-pill ' + (className || '').trim();
+
+        if (className === 'alert') {
+          pill.textContent = 'High risk';
+        } else if (className === 'warning') {
+          pill.textContent = 'Watch list';
+        } else {
+          pill.textContent = 'Healthy';
+        }
+      }
+
+      function renderSummary(summary) {
+        const workers = Number(document.getElementById('workers').value) || 1;
+        const clearanceRate = Math.min(100, (summary.entered / workers) * 100);
+        const queuePressure = Math.min(100, (summary.longest_wait / Math.max(12, Number(document.getElementById('patience').value) || 12)) * 100);
+        const risk = Math.min(100, (summary.security_incidents / Math.max(1, workers / 4)) * 100);
+
+        document.getElementById('enteredValue').textContent = summary.entered;
+        document.getElementById('sentHomeValue').textContent = summary.sent_home;
+        document.getElementById('avgWaitValue').textContent = summary.avg_wait + 'm';
+        document.getElementById('longestWaitValue').textContent = summary.longest_wait + 'm';
+        document.getElementById('incidentsValue').textContent = summary.security_incidents;
+        document.getElementById('machinesValue').textContent = summary.machines_used;
+        document.getElementById('clearanceRateValue').textContent = Math.round(clearanceRate) + '%';
+        document.getElementById('queuePressureValue').textContent = Math.round(queuePressure) + '%';
+        document.getElementById('riskValue').textContent = Math.round(risk) + '%';
+        document.getElementById('clearanceRateBar').style.width = Math.round(clearanceRate) + '%';
+        document.getElementById('queuePressureBar').style.width = Math.round(queuePressure) + '%';
+        document.getElementById('riskBar').style.width = Math.round(risk) + '%';
+        updateStatusBadge(summary);
+
+        const table = document.getElementById('incidentsTable');
+        if (!summary.incidents || summary.incidents.length === 0) {
+          table.innerHTML = '<tr><td colspan="3">No incidents recorded yet.</td></tr>';
+          return;
+        }
+
+        table.innerHTML = summary.incidents.map(item => `
+          <tr>
+            <td>${item.time}m</td>
+            <td>${item.employee}</td>
+            <td>${item.status}</td>
+          </tr>
+        `).join('');
+      }
+
+      async function runSimulation() {
+        const runBtn = document.getElementById('runBtn');
+        runBtn.disabled = true;
+        runBtn.textContent = 'Running...';
+
+        try {
+          const res = await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(readInputs())
+          });
+
+          if (!res.ok) {
+            throw new Error('Request failed');
+          }
+
+          const data = await res.json();
+          renderSummary(data);
+          document.getElementById('consoleOutput').textContent = data.report;
+        } catch (err) {
+          document.getElementById('consoleOutput').textContent = 'Simulation failed: ' + err.message;
+        } finally {
+          runBtn.disabled = false;
+          runBtn.textContent = 'Run simulation';
+        }
+      }
+
+      document.getElementById('runBtn').addEventListener('click', runSimulation);
+      document.getElementById('resetBtn').addEventListener('click', resetForm);
+      resetForm();
+    </script>
+  </body>
+</html>
